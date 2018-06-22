@@ -34,14 +34,17 @@ class LagouSpider(RedisSpider):
         re_match = re.match('^https://www.lagou.com/jobs/(\d+).html$', response.url)
         lagou_id = re_match.group(1) if re_match else 0
         lagou_item["position_name"] = response.css(".job-name span::text").extract_first("")
-        lagou_item["wages"] = response.css(".job_request .salary::text").extract_first("")
+        pay = response.css(".job_request .salary::text").extract_first("")
+        lagou_item["pay_min"] = int(pay.split("k")[0]) * 1000
+        lagou_item["pay_max"] = int(pay.split("k")[1].replace("-", "")) * 1000
+
         lagou_item["job_city"] = response.xpath('//*[@class="job_request"]/p/span[2]/text()').extract_first("").replace(
             "/", "").strip()
         lagou_item["experience"] = response.xpath('//*[@class="job_request"]/p/span[3]/text()').extract_first(
             "").replace("/", "").strip()
         lagou_item["education"] = response.xpath('//*[@class="job_request"]/p/span[4]/text()').extract_first(
             "").replace("/", "").strip()
-        lagou_item["property"] = response.xpath('//*[@class="job_request"]/p/span[5]/text()').extract_first("")
+        lagou_item["properties"] = response.xpath('//*[@class="job_request"]/p/span[5]/text()').extract_first("")
         lagou_item["classification"] = response.css(".position-label li::text").extract()
         lagou_item["advantage"] = response.css(".job-advantage p::text").extract_first("")
         lagou_item["content"] = response.css(".job_bt div").extract_first("")
@@ -52,12 +55,12 @@ class LagouSpider(RedisSpider):
         b = response.css(".publish_time::text").extract_first("")
         if re.match(r"(\d{4}-\d{2}-\d{2}).*", b):
             detester = re.match(r"(\d{4}-\d{2}-\d{2}).*", b).group(1)
-            lagou_item["create_time"] = datetime.datetime.strptime(detester, '%Y-%m-%d %H:%M:%S')
+            lagou_item["create_time"] = datetime.datetime.strptime(detester, '%Y-%m-%d')
         elif re.match(r"(\d)天前", b):
             miu = int(re.match(r"(\d)天前", b).group(1)) * 86400
             push_time = int(time.time() - miu)
             timeArray = time.localtime(push_time)
-            lagou_item["create_time"] = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
+            lagou_item["create_time"] = time.strftime("%Y-%m-%d", timeArray)
         else:
             now = datetime.datetime.now()
             lagou_item["create_time"] = now.strftime("%Y-%m-%d %H:%M:%S")

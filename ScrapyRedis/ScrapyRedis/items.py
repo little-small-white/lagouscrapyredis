@@ -10,11 +10,12 @@ import scrapy
 
 class LagouItem(scrapy.Item):
     position_name = scrapy.Field()
-    wages = scrapy.Field()
+    pay_min = scrapy.Field()
+    pay_max = scrapy.Field()
     job_city = scrapy.Field()
     experience = scrapy.Field()
     education = scrapy.Field()
-    property = scrapy.Field()
+    properties = scrapy.Field()
     classification = scrapy.Field()
     create_time = scrapy.Field()
     advantage = scrapy.Field()
@@ -26,15 +27,15 @@ class LagouItem(scrapy.Item):
     def sql_insert_get(self):
         insert_sql = """
             INSERT IGNORE INTO lagou(
-                position_name, wages, job_city,experience, education, property,
+                position_name, pay_min, pay_max, job_city,experience, education, properties,
                 classification, create_time, advantage,content, company_add, company_url, lagou_id
-            )   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            )   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         classification = ".".join(self["classification"])
         lagou_id = int(self["lagou_id"])
         sql_data = (
-            self["position_name"], self["wages"], self["job_city"],
-            self["experience"], self["education"], self["property"],
+            self["position_name"], self["pay_min"], self["pay_max"], self["job_city"],
+            self["experience"], self["education"], self["properties"],
             classification, self["create_time"], self["advantage"],
             self["content"], self["company_add"], self["company_url"], lagou_id,
         )
