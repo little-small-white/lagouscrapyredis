@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 import scrapy
 from urllib import parse
 from scrapy_redis.spiders import RedisSpider
 import re
 from ScrapyRedis.items import LagouItem
-
+import time
 
 class LagouSpider(RedisSpider):
     name = 'lagou'
@@ -41,10 +43,22 @@ class LagouSpider(RedisSpider):
             "").replace("/", "").strip()
         lagou_item["property"] = response.xpath('//*[@class="job_request"]/p/span[5]/text()').extract_first("")
         lagou_item["classification"] = response.css(".position-label li::text").extract()
-        lagou_item["create_time"] = response.css(".publish_time::text").extract_first("")
         lagou_item["advantage"] = response.css(".job-advantage p::text").extract_first("")
         lagou_item["content"] = response.css(".job_bt div").extract_first("")
+        a =''.join(response.css(".work_addr::text").extract()).replace("-", "").strip()
+        lagou_item["company_add"] = "".join(response.css(".work_addr a::text").extract()[0:-1]) + a
         lagou_item["company_url"] = response.css(".c_feature a::attr(href)").extract_first("")
         lagou_item["lagou_id"] = lagou_id
-
+        b = response.css(".publish_time::text").extract_first("")
+        if re.match(r"(\d{4}-\d{2}-\d{2}).*", b):
+            detester = re.match(r"(\d{4}-\d{2}-\d{2}).*", b).group(1)
+            lagou_item["create_time"] = datetime.datetime.strptime(detester, '%Y-%m-%d %H:%M:%S')
+        elif re.match(r"(\d)天前", b):
+            miu = int(re.match(r"(\d)天前", b).group(1)) * 86400
+            push_time = int(time.time() - miu)
+            timeArray = time.localtime(push_time)
+            lagou_item["create_time"] = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
+        else:
+            now = datetime.datetime.now()
+            lagou_item["create_time"] = now.strftime("%Y-%m-%d %H:%M:%S")
         yield lagou_item
